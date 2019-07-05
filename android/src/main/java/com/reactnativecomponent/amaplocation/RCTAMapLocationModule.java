@@ -165,20 +165,32 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getReGeocode() {
-        locationOption.setNeedAddress(true);    //可选，设置是否返回逆地理地址信息。默认是true
-        // 设置定位参数
-        locationClient.setLocationOption(locationOption);
-        // 启动定位
-        locationClient.startLocation();
+        try {
+            if (isInit()) {
+                locationOption.setNeedAddress(true);    //可选，设置是否返回逆地理地址信息。默认是true
+                // 设置定位参数
+                locationClient.setLocationOption(locationOption);
+                // 启动定位
+                locationClient.startLocation();
+            }
+        }catch (Exception e) {
+            Log.i("getReGeocodeErr", e.toString());
+        }
     }
 
     @ReactMethod
     public void getLocation() {
-        locationOption.setNeedAddress(false);    //可选，设置是否返回逆地理地址信息。默认是true
-        // 设置定位参数
-        locationClient.setLocationOption(locationOption);
-        // 启动定位
-        locationClient.startLocation();
+        try {
+            if(isInit()) {
+                locationOption.setNeedAddress(false);    //可选，设置是否返回逆地理地址信息。默认是true
+                // 设置定位参数
+                locationClient.setLocationOption(locationOption);
+                // 启动定位
+                locationClient.startLocation();
+            }
+        }catch (Exception e) {
+            Log.i("getLocationErr", e.toString());
+        }
     }
 
     @ReactMethod
@@ -217,6 +229,10 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
         if(null != mHandler) {
             mHandler = null;
         }
+    }
+
+    private boolean isInit() {
+        return locationOption != null && locationClient != null;
     }
 
     private WritableMap setResultMap(AMapLocation location) {
