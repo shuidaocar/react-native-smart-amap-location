@@ -90,6 +90,9 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
         if(options.hasKey("gpsFirst")) {
             locationOption.setGpsFirst(options.getBoolean("gpsFirst"));//可选，设置是否gps优先，只在高精度模式下有效。默认关闭
         }
+        if(options.hasKey("gpsFirstTimeout")) {
+            locationOption.setGpsFirstTimeout(options.getInt("gpsFirstTimeout"));//可选，设置GPS请求超时时间
+        }
         if(options.hasKey("httpTimeout")) {
             locationOption.setHttpTimeOut(options.getInt("httpTimeout"));//可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
         }
