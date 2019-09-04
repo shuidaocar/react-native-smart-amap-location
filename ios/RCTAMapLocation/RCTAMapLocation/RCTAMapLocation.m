@@ -55,6 +55,7 @@ RCT_EXPORT_METHOD(setOptions:(NSDictionary *)options)
     CLLocationAccuracy locationMode = kCLLocationAccuracyHundredMeters;
     BOOL pausesLocationUpdatesAutomatically = YES;
     BOOL allowsBackgroundLocationUpdates = NO;
+    int distanceFilter = kCLDistanceFilterNone;
     int locationTimeout = DefaultLocationTimeout;
     int reGeocodeTimeout = DefaultReGeocodeTimeout;
     
@@ -72,6 +73,10 @@ RCT_EXPORT_METHOD(setOptions:(NSDictionary *)options)
         
         if([keys containsObject:@"allowsBackgroundLocationUpdates"]) {
             allowsBackgroundLocationUpdates = [[options objectForKey:@"allowsBackgroundLocationUpdates"] boolValue];
+        }
+      
+        if([keys containsObject:@"distanceFilter"]) {
+          distanceFilter = [[options objectForKey:@"distanceFilter"] intValue];
         }
         
         
@@ -92,6 +97,9 @@ RCT_EXPORT_METHOD(setOptions:(NSDictionary *)options)
     
     //设置是否允许在后台定位
     [self.locationManager setAllowsBackgroundLocationUpdates:allowsBackgroundLocationUpdates];
+  
+    //设置连续定位间隔距离
+    [self.locationManager setDistanceFilter:distanceFilter];
     
     //设置定位超时时间
     [self.locationManager setLocationTimeout:locationTimeout];
