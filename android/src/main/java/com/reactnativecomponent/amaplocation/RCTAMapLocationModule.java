@@ -12,8 +12,10 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -39,6 +41,7 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
 
     private AMapLocationClient locationClient = null;
     private AMapLocationClientOption locationOption = null;
+    private AMapLocation location = null;
 
     private Intent alarmIntent = null;
     private PendingIntent alarmPi = null;
@@ -53,7 +56,7 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
      */
     private int MSG_LOCATION_FINISH = 1;
 
-    private int alarmInterval = 5;
+    private int alarmInterval = 5 * 1000;
 
     public RCTAMapLocationModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -72,7 +75,7 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
         }
         currentActivity = reactContext.getCurrentActivity();
         locationOption = new AMapLocationClientOption();
-        locationOption.setOnceLocation(true);   //调整为单次定位, 默认是多次
+//        locationOption.setOnceLocation(true);   //调整为单次定位, 默认是多次
         //初始化client
         locationClient = new AMapLocationClient(getCurrentActivity());
         if(options != null) {
@@ -97,6 +100,7 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
             locationOption.setHttpTimeOut(options.getInt("httpTimeout"));//可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
         }
         if(options.hasKey("interval")) {
+            alarmInterval  = options.getInt("interval");
             locationOption.setInterval(options.getInt("interval"));//可选，设置连续定位间隔。
         }
         if(options.hasKey("needAddress")) {
@@ -195,12 +199,11 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void startUpdatingLocation() {
-        locationClient.startLocation();
 
         if(null != alarm){
             //设置一个闹钟，2秒之后每隔一段时间执行启动一次定位程序
             alarm.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 2 * 1000,
-                    alarmInterval * 1000, alarmPi);
+                    alarmInterval, alarmPi);
         }
     }
 
@@ -211,6 +214,30 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
         //停止定位的时候取消闹钟
         if(null != alarm){
             alarm.cancel(alarmPi);
+        }
+    }
+
+    @ReactMethod
+    public void getLastKnownLocation(Promise p) {
+        try {
+            if(isInit()) {
+                p.resolve(setResultMap(locationClient.getLastKnownLocation()));
+            }
+        }catch (Exception e) {
+            p.reject(e);
+            Log.i("getLastKnownLocationErr", e.toString());
+        }
+    }
+
+    @ReactMethod
+    public void isStarted(Promise p) {
+        try {
+            if(isInit()) {
+                p.resolve(locationClient.isStarted());
+            }
+        }catch (Exception e) {
+            p.reject(e);
+            Log.i("isStartedErr", e.toString());
         }
     }
 
@@ -248,6 +275,7 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
                 resultMap.putDouble("accuracy", location.getAccuracy());
                 resultMap.putDouble("locationType", location.getAccuracy());
                 resultMap.putString("provider", location.getProvider());
+                resultMap.putInt("trustedLevel", location.getTrustedLevel());
                 if (location.getProvider().equalsIgnoreCase(
                         android.location.LocationManager.GPS_PROVIDER)) {
                     // 以下信息只有提供者是GPS时才会有
