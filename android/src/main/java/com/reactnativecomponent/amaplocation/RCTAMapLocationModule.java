@@ -131,26 +131,30 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
 
             // 定义一个PendingIntent对象，PendingIntent.getBroadcast包含了sendBroadcast的动作。
             // 也就是发送了action 为"LOCATION"的intent
-            alarmPi = PendingIntent.getBroadcast(currentActivity, 0, alarmIntent, 0);
-            // AlarmManager对象,注意这里并不是new一个对象，Alarmmanager为系统级服务
-            alarm = (AlarmManager) currentActivity.getSystemService(currentActivity.ALARM_SERVICE);
+            if (null != currentActivity) {
+                alarmPi = PendingIntent.getBroadcast(currentActivity, 0, alarmIntent, 0);
+                // AlarmManager对象,注意这里并不是new一个对象，Alarmmanager为系统级服务
+                alarm = (AlarmManager) currentActivity.getSystemService(currentActivity.ALARM_SERVICE);
 
-            //动态注册一个广播
-            IntentFilter filter = new IntentFilter();
-            filter.addAction("LOCATION");
+                //动态注册一个广播
+                IntentFilter filter = new IntentFilter();
+                filter.addAction("LOCATION");
 
-            alarmReceiver = new BroadcastReceiver(){
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    if(intent.getAction().equals("LOCATION")){
-                        if(null != locationClient){
-                            locationClient.startLocation();
+                if (null == alarmReceiver) {
+                    alarmReceiver = new BroadcastReceiver(){
+                        @Override
+                        public void onReceive(Context context, Intent intent) {
+                            if(intent.getAction().equals("LOCATION")){
+                                if(null != locationClient){
+                                    locationClient.startLocation();
+                                }
+                            }
                         }
-                    }
-                }
-            };
+                    };
 
-            currentActivity.registerReceiver(alarmReceiver, filter);
+                    currentActivity.registerReceiver(alarmReceiver, filter);
+                }
+            }
 
             mHandler = new Handler() {
                 public void dispatchMessage(android.os.Message msg) {
@@ -200,7 +204,7 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void startUpdatingLocation() {
 
-        if(null != alarm){
+        if(null != alarm && null != alarmPi){
             //设置一个闹钟，2秒之后每隔一段时间执行启动一次定位程序
             alarm.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 2 * 1000,
                     alarmInterval, alarmPi);
@@ -212,7 +216,7 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
         locationClient.stopLocation();
 
         //停止定位的时候取消闹钟
-        if(null != alarm){
+        if(null != alarm && null != alarmPi){
             alarm.cancel(alarmPi);
         }
     }
