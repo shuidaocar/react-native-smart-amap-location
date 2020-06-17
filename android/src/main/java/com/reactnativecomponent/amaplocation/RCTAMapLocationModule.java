@@ -254,9 +254,19 @@ public class RCTAMapLocationModule extends ReactContextBaseJavaModule {
             locationOption = null;
         }
         if(null != alarmReceiver && null != currentActivity){
-            currentActivity.unregisterReceiver(alarmReceiver);
-            alarmReceiver = null;
+            try {
+                currentActivity.unregisterReceiver(alarmReceiver);
+                alarmReceiver = null;
+            } catch(IllegalArgumentException e) {
+                if (e.getMessage().contains("Receiver not registered")) {
+                    // Ignore this exception. This is exactly what is desired
+                } else {
+                    // unexpected, re-throw
+                    throw e;
+                }
+            }
         }
+
         if(null != mHandler) {
             mHandler = null;
         }
